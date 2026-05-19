@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema(
       ref: 'Company',
       required: true,
     },
+    status: {
+      type: String,
+      enum: ['active', 'banned'],
+      default: 'active',
+    },
   },
   {
     timestamps: true,
