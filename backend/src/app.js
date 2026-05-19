@@ -11,6 +11,7 @@ import materialRoutes from './routes/material.routes.js';
 import financeRoutes from './routes/finance.routes.js';
 import reportRoutes from './routes/report.routes.js';
 import alertRoutes from './routes/alert.routes.js';
+import dashboardRoutes from './routes/dashboard.routes.js';
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ app.use('/api/v1/materials', materialRoutes);
 app.use('/api/v1/expenses', financeRoutes);
 app.use('/api/v1/reports', reportRoutes);
 app.use('/api/v1/alerts', alertRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
 
 // Error Handling Middleware
 app.use((req, res, next) => {
