@@ -1202,7 +1202,6 @@ const ProjectDetail = () => {
               </form>
             </div>
           </div>
-          </div>
         </div>
       )}
     </div>
