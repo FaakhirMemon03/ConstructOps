@@ -139,7 +139,7 @@ const Projects = () => {
                 <div style={styles.infoRow}>
                   <DollarSign size={16} style={{ color: (proj.budget - proj.spent) >= 0 ? 'var(--success-green)' : 'var(--alert-red)' }} />
                   <span style={{ color: (proj.budget - proj.spent) >= 0 ? 'var(--success-green)' : 'var(--alert-red)', fontWeight: '600' }}>
-                    Bacha: Rs {(proj.budget - proj.spent).toLocaleString()}
+                    Remaining: Rs {(proj.budget - proj.spent).toLocaleString()}
                   </span>
                 </div>
                 
