@@ -15,7 +15,8 @@ import {
   getReports, 
   createReport, 
   getAlerts, 
-  markAlertRead 
+  markAlertRead,
+  updateProject
 } from '../services/api';
 import { 
   Briefcase, 
@@ -303,6 +304,20 @@ const ProjectDetail = () => {
     }
   };
 
+  const handleCompleteProject = async () => {
+    if (window.confirm("Are you sure you want to mark this project as 100% completed?")) {
+      try {
+        const res = await updateProject(id, { progress: 100, status: 'completed' });
+        if (res.success) {
+          fetchDashboard();
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Failed to update project status');
+      }
+    }
+  };
+
   const handleVoiceSimulate = (phrase) => {
     setIsRecording(true);
     setSelectedUrduPhrase(phrase.urdu);
@@ -347,7 +362,19 @@ const ProjectDetail = () => {
           </div>
           <div style={styles.headerStatBox}>
             <span style={styles.headerStatLabel}>Completion %</span>
-            <span style={styles.headerStatValue}>{dashboardData.progress}%</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {(isOwner || isManager) && dashboardData.progress < 100 && (
+                <button 
+                  onClick={handleCompleteProject}
+                  style={styles.completeBtn}
+                  title="Mark project as completed"
+                >
+                  <CheckCircle size={14} />
+                  <span>Complete</span>
+                </button>
+              )}
+              <span style={styles.headerStatValue}>{dashboardData.progress}%</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1251,6 +1278,21 @@ const styles = {
     fontSize: '1.25rem',
     fontWeight: '700',
     color: 'var(--dark-graphite)',
+  },
+  completeBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.25rem',
+    backgroundColor: 'var(--success-green)',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: '4px',
+    padding: '0.25rem 0.5rem',
+    fontSize: '0.75rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: 'var(--shadow-sm)',
+    transition: 'all var(--transition-fast)',
   },
   tabsContainer: {
     display: 'flex',
