@@ -168,4 +168,15 @@ export const markAlertRead = async (id) => {
   return data;
 };
 
+// --- ADMIN & GENERAL DASHBOARD API METHODS ---
+export const loginAdmin = async (email, password) => {
+  const { data } = await API.post('/auth/admin/login', { email, password });
+  return data;
+};
+
+export const getDashboardStats = async () => {
+  const { data } = await API.get('/dashboard');
+  return data;
+};
+
 export default API;
