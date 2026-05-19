@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getDashboardStats, getUsers, updateUserStatus } from '../services/api';
+import { getDashboardStats, getUsers, updateUserStatus, deleteUser } from '../services/api';
 import { Briefcase, Users, Layers, DollarSign, Calendar, Clock, MapPin, User, FileText, Lock, Unlock } from 'lucide-react';
 
 const SvgBarChart = ({ data }) => {
@@ -174,6 +174,25 @@ const Dashboard = () => {
       } catch (err) {
         console.error(err);
         alert(err.response?.data?.message || 'Failed to update user status');
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleUserDeactivate = async (userId, userName) => {
+    const confirmMsg = `Are you sure you want to DEACTIVATE and COMPLETELY DELETE the user "${userName}"?\n\nThis will permanently remove their user data from the database, allowing them to sign up again with a fresh new account. This action is IRREVERSIBLE.`;
+
+    if (window.confirm(confirmMsg)) {
+      try {
+        setLoading(true);
+        const res = await deleteUser(userId);
+        if (res.success) {
+          alert('User account deactivated and completely deleted.');
+          await fetchDashboardData();
+        }
+      } catch (err) {
+        console.error(err);
+        alert(err.response?.data?.message || 'Failed to deactivate user');
         setLoading(false);
       }
     }
@@ -614,35 +633,60 @@ const Dashboard = () => {
                       </span>
                     </td>
                     <td style={styles.td}>
-                      <button
-                        onClick={() => handleUserStatusToggle(userItem._id, userItem.status || 'active')}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                          border: 'none',
-                          borderRadius: '4px',
-                          padding: '0.4rem 0.75rem',
-                          fontSize: '0.8rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          color: '#ffffff',
-                          backgroundColor: (userItem.status === 'banned') ? 'var(--success-green)' : 'var(--alert-red)',
-                          transition: 'background-color 0.2s',
-                        }}
-                      >
-                        {userItem.status === 'banned' ? (
-                          <>
-                            <Unlock size={14} />
-                            <span>Unban / Activate</span>
-                          </>
-                        ) : (
-                          <>
-                            <Lock size={14} />
-                            <span>Ban / Deactivate</span>
-                          </>
-                        )}
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        {/* Ban / Unban Toggle Button */}
+                        <button
+                          onClick={() => handleUserStatusToggle(userItem._id, userItem.status || 'active')}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '0.4rem 0.75rem',
+                            fontSize: '0.8rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            color: '#ffffff',
+                            backgroundColor: (userItem.status === 'banned') ? 'var(--success-green)' : 'var(--alert-red)',
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          {userItem.status === 'banned' ? (
+                            <>
+                              <Unlock size={14} />
+                              <span>Unban User</span>
+                            </>
+                          ) : (
+                            <>
+                              <Lock size={14} />
+                              <span>Ban User</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* Deactivate & Clear Button */}
+                        <button
+                          onClick={() => handleUserDeactivate(userItem._id, userItem.name)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            border: '1px solid var(--alert-red)',
+                            borderRadius: '4px',
+                            padding: '0.4rem 0.75rem',
+                            fontSize: '0.8rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            color: 'var(--alert-red)',
+                            backgroundColor: 'transparent',
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          <Users size={14} />
+                          <span>Deactivate & Clear</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -189,4 +189,9 @@ export const updateUserStatus = async (id, status) => {
   return data;
 };
 
+export const deleteUser = async (id) => {
+  const { data } = await API.delete(`/users/${id}`);
+  return data;
+};
+
 export default API;
