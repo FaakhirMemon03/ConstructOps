@@ -213,7 +213,7 @@ const Dashboard = () => {
   if (loading) return <div style={styles.loading}>Loading System Admin Dashboard...</div>;
   if (error || !data) return <div style={styles.errorBox}>{error || 'Failed to initialize'}</div>;
 
-  const { stats, progressData, budgetData, workerData, detailedProjects, detailedExpenses, detailedReports } = data;
+  const { stats, progressData, budgetData, workerData, detailedProjects, detailedExpenses, detailedReports, detailedWorkers } = data;
 
   const getRoleBadgeColor = (role) => {
     switch (role?.toLowerCase()) {
@@ -331,21 +331,28 @@ const Dashboard = () => {
               style={{ ...styles.tabBtn, ...(activeTab === 'projects' ? styles.activeTabBtn : {}) }}
             >
               <Briefcase size={16} />
-              <span>Projects & Timelines</span>
+              <span>Projects</span>
             </button>
             <button 
               onClick={() => setActiveTab('expenses')} 
               style={{ ...styles.tabBtn, ...(activeTab === 'expenses' ? styles.activeTabBtn : {}) }}
             >
               <DollarSign size={16} />
-              <span>Expenditure Audits</span>
+              <span>Expenditures</span>
             </button>
             <button 
               onClick={() => setActiveTab('reports')} 
               style={{ ...styles.tabBtn, ...(activeTab === 'reports' ? styles.activeTabBtn : {}) }}
             >
               <FileText size={16} />
-              <span>Daily Log Audits</span>
+              <span>Daily Logs</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('workers')} 
+              style={{ ...styles.tabBtn, ...(activeTab === 'workers' ? styles.activeTabBtn : {}) }}
+            >
+              <Users size={16} />
+              <span>Labor Directory</span>
             </button>
           </div>
         </div>
@@ -539,6 +546,47 @@ const Dashboard = () => {
                         </div>
                       </div>
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Tab 4: Detailed Labor Strength */}
+        {activeTab === 'workers' && (
+          <div style={styles.tableWrapper}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Worker Name</th>
+                  <th style={styles.th}>Designated Job / Role</th>
+                  <th style={styles.th}>Assigned Construction Site</th>
+                  <th style={styles.th}>Daily Wage Rate</th>
+                  <th style={styles.th}>Contact Number</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detailedWorkers && detailedWorkers.map((worker) => (
+                  <tr key={worker._id} style={styles.tr}>
+                    <td style={{ ...styles.td, fontWeight: '600' }}>{worker.name}</td>
+                    <td style={styles.td}>
+                      <span style={{ 
+                        ...styles.categoryTag, 
+                        backgroundColor: 'rgba(255, 107, 0, 0.1)', 
+                        color: 'var(--primary-orange)' 
+                      }}>
+                        {worker.role}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ fontWeight: '500' }}>{worker.projectId?.name || 'Unassigned'}</div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{worker.projectId?.location}</span>
+                    </td>
+                    <td style={{ ...styles.td, fontWeight: '700' }}>
+                      Rs {worker.dailyWage.toLocaleString()} / day
+                    </td>
+                    <td style={styles.td}>{worker.phone}</td>
                   </tr>
                 ))}
               </tbody>
