@@ -1062,142 +1062,146 @@ const ProjectDetail = () => {
       {/* 5. Daily Site Report Modal (with Urdu Voice Input Simulation) */}
       {showReportModal && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '580px' }}>
+          <div className="modal-content" style={{ maxWidth: '850px', width: '90%' }}>
             <h2>Daily Work Log & Vision AI Upload</h2>
             <button onClick={() => setShowReportModal(false)} className="modal-close">×</button>
             
-            {/* Roman Urdu Voice Helper Widget */}
-            <div style={styles.voiceAssistantBox}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <Mic size={18} style={{ color: 'var(--primary-orange)' }} />
-                <h4 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Urdu Voice Assistant (Smart Site Entry)
-                </h4>
-              </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-                Choose a Roman Urdu site log description. The AI translator will convert it to formatted English logs automatically.
-              </p>
-              
-              <div style={styles.voiceButtonsList}>
-                {urduPhrases.map((phrase, idx) => (
-                  <button 
-                    key={idx} 
-                    type="button" 
-                    onClick={() => handleVoiceSimulate(phrase)} 
-                    style={styles.voiceSimBtn}
-                    disabled={isRecording}
-                  >
-                    "{phrase.urdu}"
-                  </button>
-                ))}
-              </div>
-
-              {isRecording && (
-                <div style={styles.recordingState}>
-                  <span style={styles.recordingPulse}></span>
-                  <span>Transcribing Voice Memo: "{selectedUrduPhrase}"</span>
+            <div style={{ display: 'flex', gap: '2rem', marginTop: '1.5rem', flexWrap: 'wrap', alignItems: 'stretch' }}>
+              {/* Left Column: Voice Assistant */}
+              <div style={{ flex: '1 1 320px', backgroundColor: 'var(--bg-light)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <Mic size={18} style={{ color: 'var(--primary-orange)' }} />
+                  <h4 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>
+                    Urdu Voice Assistant (Smart Site Entry)
+                  </h4>
                 </div>
-              )}
-            </div>
-
-            <form onSubmit={handleAddReportSubmit} style={{ marginTop: '1.5rem' }}>
-              <div className="form-group">
-                <label>Work Stage / Type</label>
-                <select 
-                  className="form-control"
-                  value={rWorkType}
-                  onChange={(e) => setRWorkType(e.target.value)}
-                >
-                  <option value="Foundation">Foundation work</option>
-                  <option value="Structure">Structure building</option>
-                  <option value="Slab">Slab casting</option>
-                  <option value="Finishing">Finishing & painting</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Work Description Log</label>
-                <textarea
-                  className="form-control"
-                  rows="4"
-                  placeholder="Describe today's activities, issues, or completed tasks..."
-                  value={rDesc}
-                  onChange={(e) => setRDesc(e.target.value)}
-                  required
-                ></textarea>
-              </div>
-
-              <div className="form-group">
-                <label>Site Capture (Upload from Gallery)</label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageUpload}
-                    style={{ display: 'none' }}
-                    id="site-photo-file"
-                  />
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <label 
-                      htmlFor="site-photo-file" 
-                      className="btn btn-outline" 
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', margin: 0 }}
-                    >
-                      <Camera size={18} />
-                      <span>Choose Photo(s)</span>
-                    </label>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.75rem', lineHeight: '1.4' }}>
+                  Choose a Roman Urdu site log description. The AI translator will convert it to formatted English logs automatically.
+                </p>
+                
+                <div style={styles.voiceButtonsList}>
+                  {urduPhrases.map((phrase, idx) => (
                     <button 
+                      key={idx} 
                       type="button" 
-                      onClick={() => setRImages(['https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=600&q=80'])}
-                      className="btn btn-outline"
-                      style={{ padding: '0.5rem 0.75rem' }}
+                      onClick={() => handleVoiceSimulate(phrase)} 
+                      style={styles.voiceSimBtn}
+                      disabled={isRecording}
                     >
-                      Mock URL
+                      "{phrase.urdu}"
                     </button>
-                  </div>
-
-                  {/* Preview Selected Photos */}
-                  {rImages.length > 0 && (
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                      {rImages.map((img, idx) => (
-                        <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-                          <img src={img} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          <button 
-                            type="button" 
-                            onClick={() => handleRemoveImage(idx)} 
-                            style={{
-                              position: 'absolute',
-                              top: '2px',
-                              right: '2px',
-                              background: 'rgba(235, 87, 87, 0.8)',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: '50%',
-                              width: '18px',
-                              height: '18px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '10px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  ))}
                 </div>
+
+                {isRecording && (
+                  <div style={styles.recordingState}>
+                    <span style={styles.recordingPulse}></span>
+                    <span>Transcribing Voice Memo: "{selectedUrduPhrase}"</span>
+                  </div>
+                )}
               </div>
 
-              <div style={styles.modalActions}>
-                <button type="button" onClick={() => setShowReportModal(false)} className="btn btn-outline">Cancel</button>
-                <button type="submit" className="btn btn-primary">Submit Daily Log</button>
-              </div>
-            </form>
+              {/* Right Column: Form */}
+              <form onSubmit={handleAddReportSubmit} style={{ flex: '1 2 420px', display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: 0 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Work Stage / Type</label>
+                  <select 
+                    className="form-control"
+                    value={rWorkType}
+                    onChange={(e) => setRWorkType(e.target.value)}
+                  >
+                    <option value="Foundation">Foundation work</option>
+                    <option value="Structure">Structure building</option>
+                    <option value="Slab">Slab casting</option>
+                    <option value="Finishing">Finishing & painting</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Work Description Log</label>
+                  <textarea
+                    className="form-control"
+                    rows="4"
+                    placeholder="Describe today's activities, issues, or completed tasks..."
+                    value={rDesc}
+                    onChange={(e) => setRDesc(e.target.value)}
+                    required
+                  ></textarea>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Site Capture (Upload from Gallery)</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      style={{ display: 'none' }}
+                      id="site-photo-file"
+                    />
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <label 
+                        htmlFor="site-photo-file" 
+                        className="btn btn-outline" 
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', margin: 0 }}
+                      >
+                        <Camera size={18} />
+                        <span>Choose Photo(s)</span>
+                      </label>
+                      <button 
+                        type="button" 
+                        onClick={() => setRImages(['https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=600&q=80'])}
+                        className="btn btn-outline"
+                        style={{ padding: '0.5rem 0.75rem' }}
+                      >
+                        Mock URL
+                      </button>
+                    </div>
+
+                    {/* Preview Selected Photos */}
+                    {rImages.length > 0 && (
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                        {rImages.map((img, idx) => (
+                          <div key={idx} style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                            <img src={img} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <button 
+                              type="button" 
+                              onClick={() => handleRemoveImage(idx)} 
+                              style={{
+                                position: 'absolute',
+                                top: '2px',
+                                right: '2px',
+                                background: 'rgba(235, 87, 87, 0.8)',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '16px',
+                                height: '16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '10px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ ...styles.modalActions, marginTop: '1rem' }}>
+                  <button type="button" onClick={() => setShowReportModal(false)} className="btn btn-outline">Cancel</button>
+                  <button type="submit" className="btn btn-primary">Submit Daily Log</button>
+                </div>
+              </form>
+            </div>
+          </div>
           </div>
         </div>
       )}
