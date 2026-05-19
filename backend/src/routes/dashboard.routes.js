@@ -5,6 +5,7 @@ import Worker from '../models/worker.model.js';
 import Material from '../models/material.model.js';
 import Attendance from '../models/attendance.model.js';
 import Expense from '../models/expense.model.js';
+import DailyReport from '../models/dailyReport.model.js';
 
 const router = express.Router();
 
@@ -13,17 +14,18 @@ router.get('/', protect, async (req, res) => {
     // Filter by companyId unless it's system admin
     const filter = req.user.role === 'admin' ? {} : { companyId: req.user.companyId };
 
-    const projectsCount = await Project.countDocuments(filter);
+    const projects = await Project.find(filter).sort({ createdAt: -1 });
+    const projectsCount = projects.length;
     
     // For workers and materials, if not admin, we filter by projects belonging to the company
     let projectIds = [];
     if (req.user.role !== 'admin') {
-      const companyProjects = await Project.find({ companyId: req.user.companyId }).select('_id');
-      projectIds = companyProjects.map(p => p._id);
+      projectIds = projects.map(p => p._id);
     }
 
     const workerFilter = req.user.role === 'admin' ? {} : { projectId: { $in: projectIds } };
     const materialFilter = req.user.role === 'admin' ? {} : { projectId: { $in: projectIds } };
+    const expenseFilter = req.user.role === 'admin' ? {} : { projectId: { $in: projectIds } };
 
     const workersCount = await Worker.countDocuments(workerFilter);
     
@@ -32,7 +34,6 @@ router.get('/', protect, async (req, res) => {
     const totalMaterialsQty = materials.reduce((sum, m) => sum + (m.quantity || 0), 0);
 
     // Sum of all budgets
-    const projects = await Project.find(filter);
     const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
     const totalSpent = projects.reduce((sum, p) => sum + (p.spent || 0), 0);
 
@@ -43,13 +44,11 @@ router.get('/', protect, async (req, res) => {
     }));
 
     // Chart 2: Budget vs Actual (Months)
-    const expenseFilter = req.user.role === 'admin' ? {} : { projectId: { $in: projectIds } };
     const expenses = await Expense.find(expenseFilter);
     
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
     const budgetData = months.map((m, idx) => {
-      // planned budget is roughly distributed, actual is sum of expenses
       const planned = Math.round((totalBudget / 12) * (idx + 1) * 0.8);
       
       const monthExpenses = expenses.filter(e => {
@@ -61,7 +60,6 @@ router.get('/', protect, async (req, res) => {
       return { name: m, planned, actual };
     }).filter(data => data.planned > 0 || data.actual > 0);
 
-    // If budgetData is empty, provide fallback defaults
     if (budgetData.length === 0) {
       budgetData.push(
         { name: 'Jan', planned: 10000, actual: 8000 },
@@ -81,6 +79,34 @@ router.get('/', protect, async (req, res) => {
       { name: 'Absent', value: absentCount || 0 }
     ];
 
+    // Detailed Audit data requested by the User:
+    // 1. Detailed Projects with dates, locations, spent, budget, progress
+    const detailedProjects = projects.map(p => ({
+      id: p._id,
+      name: p.name,
+      location: p.location,
+      budget: p.budget,
+      spent: p.spent,
+      progress: p.progress,
+      startDate: p.startDate,
+      endDate: p.endDate,
+      status: p.status
+    }));
+
+    // 2. Detailed Expenses with addedBy user details and projectId details
+    const detailedExpenses = await Expense.find(expenseFilter)
+      .sort({ date: -1 })
+      .limit(15)
+      .populate('addedBy', 'name role email')
+      .populate('projectId', 'name location');
+
+    // 3. Detailed Daily Reports with addedBy user details, workType, etc.
+    const detailedReports = await DailyReport.find(expenseFilter)
+      .sort({ date: -1 })
+      .limit(15)
+      .populate('addedBy', 'name role email')
+      .populate('projectId', 'name location');
+
     res.json({
       success: true,
       stats: {
@@ -91,7 +117,10 @@ router.get('/', protect, async (req, res) => {
       },
       progressData,
       budgetData,
-      workerData
+      workerData,
+      detailedProjects,
+      detailedExpenses,
+      detailedReports
     });
   } catch (error) {
     console.error('Dashboard stats error:', error);
