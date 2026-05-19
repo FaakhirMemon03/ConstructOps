@@ -123,3 +123,36 @@ export const getMe = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error: ' + error.message });
   }
 };
+
+// @desc    Admin authentication & login
+// @route   POST /api/v1/auth/admin/login
+// @access  Public
+export const adminLogin = (req, res) => {
+  const { email, password } = req.body;
+
+  const ADMIN_EMAIL = 'constops@admin.com';
+  const ADMIN_PASSWORD = 'constops@access.com';
+
+  if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    const token = jwt.sign(
+      { role: 'admin', email },
+      process.env.JWT_SECRET || 'constructops_super_secure_jwt_secret_key_2026_dev',
+      { expiresIn: '1d' }
+    );
+
+    return res.json({
+      success: true,
+      token,
+      user: {
+        email,
+        name: 'System Admin',
+        role: 'admin',
+      },
+    });
+  }
+
+  return res.status(401).json({
+    success: false,
+    message: 'Invalid credentials',
+  });
+};
