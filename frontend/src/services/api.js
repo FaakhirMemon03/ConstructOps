@@ -179,4 +179,14 @@ export const getDashboardStats = async () => {
   return data;
 };
 
+export const getUsers = async () => {
+  const { data } = await API.get('/users');
+  return data;
+};
+
+export const updateUserStatus = async (id, status) => {
+  const { data } = await API.put(`/users/${id}/status`, { status });
+  return data;
+};
+
 export default API;
