@@ -1,17 +1,31 @@
 import Alert from '../models/alert.model.js';
+import Project from '../models/project.model.js';
 
-// @desc    Get alerts list for a project
+// @desc    Get alerts list (scoped to project, company, or global admin)
 // @route   GET /api/v1/alerts
 // @access  Private
 export const getAlerts = async (req, res) => {
   const { projectId } = req.query;
 
   try {
-    if (!projectId) {
-      return res.status(400).json({ success: false, message: 'Please specify projectId parameter' });
+    let query = {};
+    if (projectId) {
+      query.projectId = projectId;
+    } else {
+      // Global notification check
+      if (req.user.role !== 'admin') {
+        // Fetch projects matching user's company
+        const companyProjects = await Project.find({ companyId: req.user.companyId });
+        const projectIds = companyProjects.map(p => p._id);
+        query.projectId = { $in: projectIds };
+      }
     }
 
-    const alerts = await Alert.find({ projectId }).sort({ createdAt: -1 });
+    const alerts = await Alert.find(query)
+      .populate('projectId', 'name location')
+      .sort({ createdAt: -1 })
+      .limit(30);
+
     res.json({ success: true, alerts });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error: ' + error.message });

@@ -157,9 +157,9 @@ export const createReport = async (reportData) => {
   return data;
 };
 
-// --- ALERTS API METHODS ---
 export const getAlerts = async (projectId) => {
-  const { data } = await API.get(`/alerts?projectId=${projectId}`);
+  const url = projectId ? `/alerts?projectId=${projectId}` : '/alerts';
+  const { data } = await API.get(url);
   return data;
 };
 
