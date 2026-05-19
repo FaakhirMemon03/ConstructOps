@@ -58,6 +58,19 @@ const Sidebar = () => {
 
       {/* Nav Menu */}
       <div style={styles.menuList}>
+        {user && user.role === 'admin' && (
+          <NavLink 
+            to="/dashboard" 
+            style={({ isActive }) => ({
+              ...styles.menuItem,
+              ...(isActive ? styles.activeMenuItem : {})
+            })}
+          >
+            <LayoutDashboard size={20} />
+            <span>Admin Dashboard</span>
+          </NavLink>
+        )}
+
         <NavLink 
           to="/projects" 
           style={({ isActive }) => ({
@@ -68,8 +81,6 @@ const Sidebar = () => {
           <Briefcase size={20} />
           <span>Projects</span>
         </NavLink>
-
-        {/* Other navigation elements can link to their respective tabs or list */}
       </div>
 
       {/* Footer Logout Button */}

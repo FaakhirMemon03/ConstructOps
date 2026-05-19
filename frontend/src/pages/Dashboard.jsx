@@ -1,0 +1,447 @@
+import React, { useEffect, useState } from 'react';
+import { getDashboardStats } from '../services/api';
+import { Briefcase, Users, Layers, DollarSign, TrendingUp, Mic } from 'lucide-react';
+
+const SvgBarChart = ({ data }) => {
+  const chartHeight = 160;
+  const chartWidth = 500;
+  const paddingLeft = 40;
+  const paddingBottom = 30;
+  const graphHeight = chartHeight - paddingBottom;
+  const graphWidth = chartWidth - paddingLeft;
+  
+  const maxVal = 100;
+  const barWidth = 40;
+  const gap = (graphWidth - (data.length * barWidth)) / (data.length + 1 || 1);
+
+  return (
+    <svg width="100%" height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
+      {/* Grid lines */}
+      {[0, 25, 50, 75, 100].map((val) => {
+        const y = graphHeight - (val / maxVal) * (graphHeight - 10);
+        return (
+          <g key={val}>
+            <line x1={paddingLeft} y1={y} x2={chartWidth} y2={y} stroke="rgba(0,0,0,0.05)" strokeWidth="1" />
+            <text x={paddingLeft - 10} y={y + 4} fontSize="10" fill="var(--text-muted)" textAnchor="end">{val}%</text>
+          </g>
+        );
+      })}
+      
+      {/* Bars */}
+      {data.map((item, idx) => {
+        const x = paddingLeft + gap + idx * (barWidth + gap);
+        const barHeight = (item.progress / maxVal) * (graphHeight - 10);
+        const y = graphHeight - barHeight;
+
+        return (
+          <g key={idx} style={{ cursor: 'pointer' }}>
+            <rect
+              x={x}
+              y={y}
+              width={barWidth}
+              height={barHeight}
+              fill="var(--primary-orange)"
+              rx="4"
+              style={{ transition: 'all 0.3s ease' }}
+            />
+            <text x={x + barWidth/2} y={chartHeight - 10} fontSize="10" fill="var(--dark-graphite)" textAnchor="middle">
+              {item.name}
+            </text>
+            <text x={x + barWidth/2} y={y - 5} fontSize="9" fontWeight="600" fill="var(--primary-orange)" textAnchor="middle">
+              {item.progress}%
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+const SvgLineChart = ({ data }) => {
+  const chartHeight = 160;
+  const chartWidth = 500;
+  const paddingLeft = 50;
+  const paddingBottom = 30;
+  const graphHeight = chartHeight - paddingBottom;
+  const graphWidth = chartWidth - paddingLeft;
+
+  const allVals = data.flatMap(d => [d.planned, d.actual]);
+  const maxVal = Math.max(...allVals, 1000);
+  
+  const getCoordinates = (key) => {
+    const stepX = graphWidth / (data.length - 1 || 1);
+    return data.map((d, idx) => {
+      const x = paddingLeft + idx * stepX;
+      const y = graphHeight - (d[key] / maxVal) * (graphHeight - 15);
+      return { x, y };
+    });
+  };
+
+  const plannedCoords = getCoordinates('planned');
+  const actualCoords = getCoordinates('actual');
+
+  const makePath = (coords) => {
+    return coords.reduce((path, c, idx) => {
+      return path + `${idx === 0 ? 'M' : 'L'} ${c.x} ${c.y}`;
+    }, '');
+  };
+
+  return (
+    <svg width="100%" height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
+      {/* Grid lines */}
+      {[0, 0.5, 1].map((ratio) => {
+        const val = Math.round(maxVal * ratio);
+        const y = graphHeight - ratio * (graphHeight - 15);
+        return (
+          <g key={ratio}>
+            <line x1={paddingLeft} y1={y} x2={chartWidth} y2={y} stroke="rgba(0,0,0,0.05)" strokeWidth="1" />
+            <text x={paddingLeft - 10} y={y + 4} fontSize="10" fill="var(--text-muted)" textAnchor="end">
+              Rs {val >= 1000 ? (val / 1000) + 'k' : val}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* Planned Line */}
+      <path d={makePath(plannedCoords)} fill="none" stroke="var(--steel-blue)" strokeWidth="2.5" strokeDasharray="4 4" />
+      
+      {/* Actual Line */}
+      <path d={makePath(actualCoords)} fill="none" stroke="var(--primary-orange)" strokeWidth="3" />
+
+      {/* Dots & Labels */}
+      {data.map((d, idx) => {
+        const pCoord = plannedCoords[idx];
+        const aCoord = actualCoords[idx];
+        return (
+          <g key={idx}>
+            <text x={pCoord.x} y={chartHeight - 10} fontSize="10" fill="var(--dark-graphite)" textAnchor="middle">
+              {d.name}
+            </text>
+            <circle cx={pCoord.x} cy={pCoord.y} r="4" fill="var(--steel-blue)" />
+            <circle cx={aCoord.x} cy={aCoord.y} r="4" fill="var(--primary-orange)" />
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+const SvgDonutChart = ({ data }) => {
+  const total = data.reduce((sum, d) => sum + d.value, 0) || 1;
+  const size = 180;
+  const center = size / 2;
+  const r = 60;
+  const circumference = 2 * Math.PI * r;
+
+  let accumulatedPercentage = 0;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={center} cy={center} r={r} fill="transparent" stroke="var(--bg-light)" strokeWidth="16" />
+        {data.map((d, idx) => {
+          const percentage = (d.value / total) * 100;
+          const strokeDashoffset = circumference - (circumference * percentage) / 100;
+          const strokeDasharray = circumference;
+          const color = d.name === 'Present' ? 'var(--success-green)' : 'var(--alert-red)';
+          
+          const rotation = (accumulatedPercentage / 100) * 360 - 90;
+          accumulatedPercentage += percentage;
+
+          return (
+            <circle
+              key={idx}
+              cx={center}
+              cy={center}
+              r={r}
+              fill="transparent"
+              stroke={color}
+              strokeWidth="16"
+              strokeDasharray={strokeDasharray}
+              strokeDashoffset={strokeDashoffset}
+              transform={`rotate(${rotation} ${center} ${center})`}
+              style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+            />
+          );
+        })}
+        
+        <text x={center} y={center + 5} textAnchor="middle" fontSize="12" fontWeight="bold" fill="var(--dark-graphite)">
+          {Math.round((data[0].value / total) * 100)}% Present
+        </text>
+      </svg>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {data.map((d, idx) => {
+          const color = d.name === 'Present' ? 'var(--success-green)' : 'var(--alert-red)';
+          return (
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+              <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: color }}></span>
+              <span style={{ fontWeight: '500' }}>{d.name}: {d.value} workers</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const Dashboard = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await getDashboardStats();
+        if (res.success) {
+          setData(res);
+        } else {
+          setError(res.message || 'Error loading dashboard metrics');
+        }
+      } catch (err) {
+        console.error(err);
+        setError('Server connection error. Failed to load dashboard stats.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
+
+  if (loading) return <div style={styles.loading}>Loading System Admin Dashboard...</div>;
+  if (error || !data) return <div style={styles.errorBox}>{error || 'Failed to initialize'}</div>;
+
+  const { stats, progressData, budgetData, workerData } = data;
+
+  return (
+    <div style={styles.container}>
+      {/* Top Header */}
+      <div>
+        <h1 style={styles.title}>System Admin Dashboard</h1>
+        <p style={styles.subtitle}>Overview of all construction sites, labor attendance, and material supplies.</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div className="card" style={styles.metricCard}>
+          <div style={styles.metricHeader}>
+            <span>Active Projects</span>
+            <Briefcase size={20} style={{ color: 'var(--steel-blue)' }} />
+          </div>
+          <h3>{stats.projects}</h3>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Registered Sites</span>
+        </div>
+
+        <div className="card" style={styles.metricCard}>
+          <div style={styles.metricHeader}>
+            <span>Labor Strength</span>
+            <Users size={20} style={{ color: 'var(--success-green)' }} />
+          </div>
+          <h3>{stats.workers}</h3>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Workers Registered</span>
+        </div>
+
+        <div className="card" style={styles.metricCard}>
+          <div style={styles.metricHeader}>
+            <span>Materials Used</span>
+            <Layers size={20} style={{ color: 'var(--primary-orange)' }} />
+          </div>
+          <h3>{stats.materials}</h3>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Units Transacted</span>
+        </div>
+
+        <div className="card" style={styles.metricCard}>
+          <div style={styles.metricHeader}>
+            <span>Total Outflow</span>
+            <DollarSign size={20} style={{ color: 'var(--alert-red)' }} />
+          </div>
+          <h3>Rs {stats.budget.toLocaleString()}</h3>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Spent Across Sites</span>
+        </div>
+      </div>
+
+      {/* Charts Split grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+        {/* Project Progress Bar Chart */}
+        <div className="card" style={styles.chartCard}>
+          <h3 style={styles.chartTitle}>Project Completion Progress</h3>
+          <p style={styles.chartSub}>Track percentage complete across your active sites</p>
+          <div style={{ marginTop: '1.5rem' }}>
+            {progressData.length > 0 ? (
+              <SvgBarChart data={progressData} />
+            ) : (
+              <div style={styles.noData}>No active projects registered</div>
+            )}
+          </div>
+        </div>
+
+        {/* Budget vs Actual Line Chart */}
+        <div className="card" style={styles.chartCard}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3 style={styles.chartTitle}>Budget vs Actual Cost</h3>
+              <p style={styles.chartSub}>Planned allocation (dashed) vs logged site outflow</p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.75rem' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <span style={{ width: '10px', height: '10px', backgroundColor: 'var(--steel-blue)' }}></span> Planned
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <span style={{ width: '10px', height: '10px', backgroundColor: 'var(--primary-orange)' }}></span> Actual
+              </span>
+            </div>
+          </div>
+          <div style={{ marginTop: '1.5rem' }}>
+            <SvgLineChart data={budgetData} />
+          </div>
+        </div>
+      </div>
+
+      {/* Attendance & Recent Activity row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+        {/* Labor Attendance Donut Chart */}
+        <div className="card" style={styles.chartCard}>
+          <h3 style={styles.chartTitle}>Daily Labor Strength</h3>
+          <p style={styles.chartSub}>Check-in attendance distribution for today</p>
+          <div style={{ marginTop: '1.5rem' }}>
+            <SvgDonutChart data={workerData} />
+          </div>
+        </div>
+
+        {/* System Activity Logs */}
+        <div className="card" style={styles.chartCard}>
+          <h3 style={styles.chartTitle}>Recent Activity Logs</h3>
+          <p style={styles.chartSub}>Realtime logs from site managers and accountants</p>
+          <div style={styles.activityList}>
+            <div style={styles.activityItem}>
+              <span style={styles.activityDot}></span>
+              <div>
+                <p style={styles.activityText}>Daily log uploaded for DHA Phase 6 site</p>
+                <span style={styles.activityTime}>Just now</span>
+              </div>
+            </div>
+            <div style={styles.activityItem}>
+              <span style={styles.activityDot}></span>
+              <div>
+                <p style={styles.activityText}>New cement stock addition logged</p>
+                <span style={styles.activityTime}>1 hour ago</span>
+              </div>
+            </div>
+            <div style={styles.activityItem}>
+              <span style={styles.activityDot}></span>
+              <div>
+                <p style={styles.activityText}>Labor wages expense approved by Accountant</p>
+                <span style={styles.activityTime}>2 hours ago</span>
+              </div>
+            </div>
+            <div style={styles.activityItem}>
+              <span style={styles.activityDot}></span>
+              <div>
+                <p style={styles.activityText}>System Admin portal initialized</p>
+                <span style={styles.activityTime}>Today</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const styles = {
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2rem',
+  },
+  title: {
+    fontSize: '1.75rem',
+    color: 'var(--dark-graphite)',
+  },
+  subtitle: {
+    color: 'var(--text-muted)',
+    fontSize: '0.95rem',
+  },
+  loading: {
+    textAlign: 'center',
+    padding: '5rem',
+    color: 'var(--text-muted)',
+    fontWeight: '500',
+  },
+  errorBox: {
+    backgroundColor: 'var(--alert-red-light)',
+    color: 'var(--alert-red)',
+    padding: '1.5rem',
+    borderRadius: 'var(--radius-md)',
+    textAlign: 'center',
+    maxWidth: '450px',
+    margin: '3rem auto',
+    fontWeight: '500',
+  },
+  metricCard: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    minHeight: '120px',
+    padding: '1.5rem',
+  },
+  metricHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    color: 'var(--text-muted)',
+  },
+  chartCard: {
+    padding: '1.5rem',
+  },
+  chartTitle: {
+    fontSize: '1.1rem',
+    fontWeight: '600',
+    color: 'var(--dark-graphite)',
+  },
+  chartSub: {
+    fontSize: '0.78rem',
+    color: 'var(--text-muted)',
+    marginTop: '0.15rem',
+  },
+  noData: {
+    textAlign: 'center',
+    color: 'var(--text-muted)',
+    padding: '3rem',
+    fontSize: '0.9rem',
+  },
+  activityList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+    marginTop: '1.5rem',
+  },
+  activityItem: {
+    display: 'flex',
+    gap: '1rem',
+    alignItems: 'flex-start',
+    borderBottom: '1px solid rgba(0,0,0,0.02)',
+    paddingBottom: '0.75rem',
+  },
+  activityDot: {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    backgroundColor: 'var(--primary-orange)',
+    marginTop: '5px',
+  },
+  activityText: {
+    fontSize: '0.875rem',
+    color: 'var(--dark-graphite-text)',
+    margin: 0,
+  },
+  activityTime: {
+    fontSize: '0.75rem',
+    color: 'var(--text-muted)',
+  },
+};
+
+export default Dashboard;

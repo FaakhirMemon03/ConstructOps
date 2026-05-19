@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
 
         {/* Private workspace layouts */}
         <Route element={<Layout title="ConstructOps Dashboard" />}>
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:id" element={<ProjectDetail />} />
         </Route>
