@@ -26,7 +26,7 @@ const Sidebar = () => {
     <div style={styles.sidebar}>
       {/* Brand Header */}
       <div style={styles.brand}>
-        <svg width="200" height="50" viewBox="0 0 360 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="200" height="50" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           {/* C Shape */}
           <path d="M80 20 A30 30 0 1 0 80 80 L65 70 A18 18 0 1 1 65 30 Z" fill="#FFFFFF"/>
           {/* Building Lines */}
@@ -37,7 +37,7 @@ const Sidebar = () => {
           <text x="120" y="62" font-family="Poppins, Arial, sans-serif" font-size="36" fill="#FFFFFF" font-weight="700">
             Construct
           </text>
-          <text x="300" y="62" font-family="Poppins, Arial, sans-serif" font-size="36" fill="#FF6B00" font-weight="800">
+          <text x="310" y="62" font-family="Poppins, Arial, sans-serif" font-size="36" fill="#FF6B00" font-weight="800">
             Ops
           </text>
         </svg>

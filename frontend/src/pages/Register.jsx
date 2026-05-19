@@ -38,7 +38,7 @@ const Register = () => {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.logoSection}>
-          <svg width="220" height="60" viewBox="0 0 360 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="220" height="60" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             {/* C Shape */}
             <path d="M80 20 A30 30 0 1 0 80 80 L65 70 A18 18 0 1 1 65 30 Z" fill="#1E1E1E"/>
             {/* Building Lines */}
@@ -49,7 +49,7 @@ const Register = () => {
             <text x="120" y="62" font-family="Poppins, Arial, sans-serif" font-size="36" fill="#1E1E1E" font-weight="700">
               Construct
             </text>
-            <text x="300" y="62" font-family="Poppins, Arial, sans-serif" font-size="36" fill="#FF6B00" font-weight="800">
+            <text x="310" y="62" font-family="Poppins, Arial, sans-serif" font-size="36" fill="#FF6B00" font-weight="800">
               Ops
             </text>
           </svg>
