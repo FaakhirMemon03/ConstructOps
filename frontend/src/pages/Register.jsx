@@ -39,13 +39,13 @@ const Register = () => {
       <div style={styles.card}>
         <div style={styles.logoSection}>
           <svg width="220" height="60" viewBox="0 0 360 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- C Shape -->
+            {/* C Shape */}
             <path d="M80 20 A30 30 0 1 0 80 80 L65 70 A18 18 0 1 1 65 30 Z" fill="#1E1E1E"/>
-            <!-- Building Lines -->
+            {/* Building Lines */}
             <rect x="70" y="30" width="6" height="40" fill="#FF6B00"/>
             <rect x="80" y="35" width="6" height="30" fill="#1E1E1E"/>
             <rect x="90" y="40" width="6" height="20" fill="#1E1E1E"/>
-            <!-- Text -->
+            {/* Text */}
             <text x="120" y="62" font-family="Poppins, Arial, sans-serif" font-size="36" fill="#1E1E1E" font-weight="700">
               Construct
             </text>
