@@ -371,13 +371,14 @@ const ProjectDetail = () => {
       {activeTab === 'overview' && (
         <div style={styles.tabContent}>
           {/* Quick Metrics Grid */}
-          <div className="grid grid-4">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
             <div className="card" style={styles.metricCard}>
               <div style={styles.metricHeader}>
                 <span>Project Budget</span>
                 <DollarSign size={20} style={{color: 'var(--steel-blue)'}} />
               </div>
               <h3>Rs {dashboardData.budget.toLocaleString()}</h3>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Allocated</span>
             </div>
             
             <div className="card" style={styles.metricCard}>
@@ -386,6 +387,20 @@ const ProjectDetail = () => {
                 <DollarSign size={20} style={{color: 'var(--primary-orange)'}} />
               </div>
               <h3>Rs {dashboardData.spent.toLocaleString()}</h3>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Outflow</span>
+            </div>
+
+            <div className="card" style={styles.metricCard}>
+              <div style={styles.metricHeader}>
+                <span>Remaining Budget</span>
+                <TrendingUp size={20} style={{color: (dashboardData.budget - dashboardData.spent) >= 0 ? 'var(--success-green)' : 'var(--alert-red)'}} />
+              </div>
+              <h3 style={{color: (dashboardData.budget - dashboardData.spent) >= 0 ? 'var(--success-green)' : 'var(--alert-red)'}}>
+                Rs {(dashboardData.budget - dashboardData.spent).toLocaleString()}
+              </h3>
+              <span style={{ fontSize: '0.75rem', color: (dashboardData.budget - dashboardData.spent) >= 0 ? 'var(--success-green)' : 'var(--alert-red)', fontWeight: '600' }}>
+                {(dashboardData.budget - dashboardData.spent) >= 0 ? 'Bacha hua budget' : 'Over Budget!'}
+              </span>
             </div>
 
             <div className="card" style={styles.metricCard}>
@@ -394,6 +409,7 @@ const ProjectDetail = () => {
                 <Users size={20} style={{color: 'var(--success-green)'}} />
               </div>
               <h3>{dashboardData.activeWorkers} Workers</h3>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Checked In Today</span>
             </div>
 
             <div className="card" style={styles.metricCard}>
@@ -402,6 +418,7 @@ const ProjectDetail = () => {
                 <AlertTriangle size={20} style={{color: 'var(--alert-red)'}} />
               </div>
               <h3>{dashboardData.alerts.length} Issues</h3>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Action Required</span>
             </div>
           </div>
 
