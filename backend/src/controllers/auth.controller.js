@@ -76,7 +76,15 @@ export const loginUser = async (req, res) => {
 
     const user = await User.findOne({ email }).populate('companyId');
 
-    if (user && (await user.comparePassword(password))) {
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    if (user.status === 'banned') {
+      return res.status(403).json({ success: false, message: 'Your account has been deactivated/banned by the System Admin.' });
+    }
+
+    if (await user.comparePassword(password)) {
       res.json({
         success: true,
         token: generateToken(user._id),
