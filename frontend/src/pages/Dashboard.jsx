@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getDashboardStats } from '../services/api';
-import { Briefcase, Users, Layers, DollarSign, TrendingUp, Mic } from 'lucide-react';
+import { Briefcase, Users, Layers, DollarSign, Calendar, Clock, MapPin, User, FileText } from 'lucide-react';
 
 const SvgBarChart = ({ data }) => {
   const chartHeight = 160;
@@ -189,6 +189,7 @@ const Dashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('projects');
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -212,7 +213,25 @@ const Dashboard = () => {
   if (loading) return <div style={styles.loading}>Loading System Admin Dashboard...</div>;
   if (error || !data) return <div style={styles.errorBox}>{error || 'Failed to initialize'}</div>;
 
-  const { stats, progressData, budgetData, workerData } = data;
+  const { stats, progressData, budgetData, workerData, detailedProjects, detailedExpenses, detailedReports } = data;
+
+  const getRoleBadgeColor = (role) => {
+    switch (role?.toLowerCase()) {
+      case 'owner': return '#D32F2F'; // Dark Red
+      case 'manager': return '#E65100'; // Dark Orange
+      case 'accountant': return '#1976D2'; // Blue
+      default: return 'var(--text-muted)';
+    }
+  };
+
+  const getStatusBadgeColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'active': return 'var(--success-green)';
+      case 'completed': return 'var(--steel-blue)';
+      case 'paused': return 'var(--primary-orange)';
+      default: return 'var(--text-muted)';
+    }
+  };
 
   return (
     <div style={styles.container}>
@@ -298,52 +317,234 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Attendance & Recent Activity row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
-        {/* Labor Attendance Donut Chart */}
-        <div className="card" style={styles.chartCard}>
-          <h3 style={styles.chartTitle}>Daily Labor Strength</h3>
-          <p style={styles.chartSub}>Check-in attendance distribution for today</p>
-          <div style={{ marginTop: '1.5rem' }}>
-            <SvgDonutChart data={workerData} />
+      {/* Audit & Logs Panel Section */}
+      <div className="card" style={styles.auditCard}>
+        <div style={styles.auditHeader}>
+          <div>
+            <h2 style={styles.chartTitle}>Detailed System Audits</h2>
+            <p style={styles.chartSub}>Track timelines, expenditures, daily activity, and worker transactions.</p>
+          </div>
+          
+          <div style={styles.tabButtons}>
+            <button 
+              onClick={() => setActiveTab('projects')} 
+              style={{ ...styles.tabBtn, ...(activeTab === 'projects' ? styles.activeTabBtn : {}) }}
+            >
+              <Briefcase size={16} />
+              <span>Projects & Timelines</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('expenses')} 
+              style={{ ...styles.tabBtn, ...(activeTab === 'expenses' ? styles.activeTabBtn : {}) }}
+            >
+              <DollarSign size={16} />
+              <span>Expenditure Audits</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('reports')} 
+              style={{ ...styles.tabBtn, ...(activeTab === 'reports' ? styles.activeTabBtn : {}) }}
+            >
+              <FileText size={16} />
+              <span>Daily Log Audits</span>
+            </button>
           </div>
         </div>
 
-        {/* System Activity Logs */}
-        <div className="card" style={styles.chartCard}>
-          <h3 style={styles.chartTitle}>Recent Activity Logs</h3>
-          <p style={styles.chartSub}>Realtime logs from site managers and accountants</p>
-          <div style={styles.activityList}>
-            <div style={styles.activityItem}>
-              <span style={styles.activityDot}></span>
-              <div>
-                <p style={styles.activityText}>Daily log uploaded for DHA Phase 6 site</p>
-                <span style={styles.activityTime}>Just now</span>
-              </div>
-            </div>
-            <div style={styles.activityItem}>
-              <span style={styles.activityDot}></span>
-              <div>
-                <p style={styles.activityText}>New cement stock addition logged</p>
-                <span style={styles.activityTime}>1 hour ago</span>
-              </div>
-            </div>
-            <div style={styles.activityItem}>
-              <span style={styles.activityDot}></span>
-              <div>
-                <p style={styles.activityText}>Labor wages expense approved by Accountant</p>
-                <span style={styles.activityTime}>2 hours ago</span>
-              </div>
-            </div>
-            <div style={styles.activityItem}>
-              <span style={styles.activityDot}></span>
-              <div>
-                <p style={styles.activityText}>System Admin portal initialized</p>
-                <span style={styles.activityTime}>Today</span>
-              </div>
-            </div>
+        {/* Tab 1: Detailed Projects */}
+        {activeTab === 'projects' && (
+          <div style={styles.tableWrapper}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Project</th>
+                  <th style={styles.th}>Location</th>
+                  <th style={styles.th}>Duration</th>
+                  <th style={styles.th}>Budget Allocation</th>
+                  <th style={styles.th}>Spent</th>
+                  <th style={styles.th}>Progress</th>
+                  <th style={styles.th}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detailedProjects.map((p) => (
+                  <tr key={p.id} style={styles.tr}>
+                    <td style={{ ...styles.td, fontWeight: '600' }}>{p.name}</td>
+                    <td style={styles.td}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <MapPin size={14} style={{ color: 'var(--text-muted)' }} />
+                        <span>{p.location}</span>
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ fontSize: '0.8rem' }}>
+                        <div>Start: {new Date(p.startDate).toLocaleDateString()}</div>
+                        <div>End: {new Date(p.endDate).toLocaleDateString()}</div>
+                      </div>
+                    </td>
+                    <td style={styles.td}>Rs {p.budget.toLocaleString()}</td>
+                    <td style={{ ...styles.td, color: p.spent > p.budget ? 'var(--alert-red)' : 'inherit' }}>
+                      Rs {p.spent.toLocaleString()}
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={styles.progressContainer}>
+                          <div style={{ ...styles.progressBar, width: `${p.progress}%` }}></div>
+                        </div>
+                        <span>{p.progress}%</span>
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <span style={{ 
+                        ...styles.statusBadge, 
+                        backgroundColor: getStatusBadgeColor(p.status) + '15', 
+                        color: getStatusBadgeColor(p.status) 
+                      }}>
+                        {p.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
+        )}
+
+        {/* Tab 2: Detailed Expenditures */}
+        {activeTab === 'expenses' && (
+          <div style={styles.tableWrapper}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Date & Time</th>
+                  <th style={styles.th}>Project</th>
+                  <th style={styles.th}>Category</th>
+                  <th style={styles.th}>Description</th>
+                  <th style={styles.th}>Amount</th>
+                  <th style={styles.th}>Logged By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detailedExpenses.map((exp) => (
+                  <tr key={exp._id} style={styles.tr}>
+                    <td style={styles.td}>
+                      <div style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <Clock size={12} style={{ color: 'var(--text-muted)' }} />
+                        <span>
+                          {new Date(exp.date).toLocaleDateString()} {new Date(exp.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ fontWeight: '500' }}>{exp.projectId?.name || 'Unknown Project'}</div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{exp.projectId?.location}</span>
+                    </td>
+                    <td style={styles.td}>
+                      <span style={styles.categoryTag}>{exp.category}</span>
+                    </td>
+                    <td style={{ ...styles.td, fontSize: '0.85rem' }}>{exp.description}</td>
+                    <td style={{ ...styles.td, fontWeight: '700', color: 'var(--alert-red)' }}>
+                      Rs {exp.amount.toLocaleString()}
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={styles.userIcon}>
+                          <User size={12} />
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{exp.addedBy?.name || 'System'}</div>
+                          <span style={{ 
+                            fontSize: '0.7rem', 
+                            color: getRoleBadgeColor(exp.addedBy?.role),
+                            fontWeight: '700'
+                          }}>
+                            {exp.addedBy?.role?.toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Tab 3: Detailed Daily Reports */}
+        {activeTab === 'reports' && (
+          <div style={styles.tableWrapper}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Date & Time</th>
+                  <th style={styles.th}>Project</th>
+                  <th style={styles.th}>Work Stage</th>
+                  <th style={styles.th}>Activity Description</th>
+                  <th style={styles.th}>Photos</th>
+                  <th style={styles.th}>Logged By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detailedReports.map((rep) => (
+                  <tr key={rep._id} style={styles.tr}>
+                    <td style={styles.td}>
+                      <div style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <Clock size={12} style={{ color: 'var(--text-muted)' }} />
+                        <span>
+                          {new Date(rep.date).toLocaleDateString()} {new Date(rep.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ fontWeight: '500' }}>{rep.projectId?.name || 'Unknown Project'}</div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{rep.projectId?.location}</span>
+                    </td>
+                    <td style={styles.td}>
+                      <span style={{ ...styles.categoryTag, backgroundColor: '#E0F7FA', color: '#006064' }}>
+                        {rep.workType}
+                      </span>
+                    </td>
+                    <td style={{ ...styles.td, fontSize: '0.85rem', maxWidth: '300px', wordBreak: 'break-word' }}>
+                      {rep.description}
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ display: 'flex', gap: '0.25rem' }}>
+                        {rep.images && rep.images.length > 0 ? (
+                          rep.images.map((img, idx) => (
+                            <img 
+                              key={idx} 
+                              src={img} 
+                              alt="Site capture" 
+                              style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }}
+                            />
+                          ))
+                        ) : (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>No images</span>
+                        )}
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={styles.userIcon}>
+                          <User size={12} />
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{rep.addedBy?.name || 'System'}</div>
+                          <span style={{ 
+                            fontSize: '0.7rem', 
+                            color: getRoleBadgeColor(rep.addedBy?.role),
+                            fontWeight: '700'
+                          }}>
+                            {rep.addedBy?.role?.toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -413,33 +614,113 @@ const styles = {
     padding: '3rem',
     fontSize: '0.9rem',
   },
-  activityList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-    marginTop: '1.5rem',
+  auditCard: {
+    padding: '2rem',
   },
-  activityItem: {
+  auditHeader: {
     display: 'flex',
-    gap: '1rem',
-    alignItems: 'flex-start',
-    borderBottom: '1px solid rgba(0,0,0,0.02)',
-    paddingBottom: '0.75rem',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '1.5rem',
+    borderBottom: '1px solid var(--border-color)',
+    paddingBottom: '1.25rem',
+    marginBottom: '1.5rem',
   },
-  activityDot: {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
+  tabButtons: {
+    display: 'flex',
+    gap: '0.5rem',
+    backgroundColor: 'var(--bg-light)',
+    padding: '0.25rem',
+    borderRadius: 'var(--radius-sm)',
+  },
+  tabBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    border: 'none',
+    background: 'none',
+    padding: '0.5rem 1rem',
+    borderRadius: '4px',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    color: 'var(--text-muted)',
+    cursor: 'pointer',
+    transition: 'all var(--transition-fast)',
+  },
+  activeTabBtn: {
+    backgroundColor: '#ffffff',
+    color: 'var(--primary-orange)',
+    boxShadow: 'var(--shadow-sm)',
+  },
+  tableWrapper: {
+    overflowX: 'auto',
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    textAlign: 'left',
+  },
+  th: {
+    padding: '0.75rem 1rem',
+    fontSize: '0.78rem',
+    fontWeight: '700',
+    color: 'var(--text-muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    borderBottom: '2px solid var(--border-color)',
+  },
+  td: {
+    padding: '1rem',
+    fontSize: '0.9rem',
+    color: 'var(--dark-graphite)',
+    borderBottom: '1px solid var(--border-color)',
+    verticalAlign: 'middle',
+  },
+  tr: {
+    transition: 'background-color 0.2s',
+    ':hover': {
+      backgroundColor: 'rgba(0,0,0,0.01)',
+    },
+  },
+  progressContainer: {
+    width: '80px',
+    height: '6px',
+    backgroundColor: 'var(--border-color)',
+    borderRadius: '3px',
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
     backgroundColor: 'var(--primary-orange)',
-    marginTop: '5px',
+    borderRadius: '3px',
   },
-  activityText: {
-    fontSize: '0.875rem',
-    color: 'var(--dark-graphite-text)',
-    margin: 0,
-  },
-  activityTime: {
+  statusBadge: {
+    display: 'inline-block',
+    padding: '0.25rem 0.5rem',
     fontSize: '0.75rem',
+    fontWeight: '700',
+    borderRadius: '10px',
+    textTransform: 'capitalize',
+  },
+  categoryTag: {
+    display: 'inline-block',
+    padding: '0.2rem 0.5rem',
+    fontSize: '0.75rem',
+    fontWeight: '600',
+    borderRadius: '4px',
+    backgroundColor: '#ECEFF1',
+    color: '#37474F',
+    textTransform: 'uppercase',
+  },
+  userIcon: {
+    width: '26px',
+    height: '26px',
+    borderRadius: '50%',
+    backgroundColor: 'var(--bg-light)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     color: 'var(--text-muted)',
   },
 };
