@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getDashboardStats } from '../services/api';
-import { Briefcase, Users, Layers, DollarSign, Calendar, Clock, MapPin, User, FileText } from 'lucide-react';
+import { getDashboardStats, getUsers, updateUserStatus } from '../services/api';
+import { Briefcase, Users, Layers, DollarSign, Calendar, Clock, MapPin, User, FileText, Lock, Unlock } from 'lucide-react';
 
 const SvgBarChart = ({ data }) => {
   const chartHeight = 160;
@@ -126,89 +126,58 @@ const SvgLineChart = ({ data }) => {
   );
 };
 
-const SvgDonutChart = ({ data }) => {
-  const total = data.reduce((sum, d) => sum + d.value, 0) || 1;
-  const size = 180;
-  const center = size / 2;
-  const r = 60;
-  const circumference = 2 * Math.PI * r;
-
-  let accumulatedPercentage = 0;
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={center} cy={center} r={r} fill="transparent" stroke="var(--bg-light)" strokeWidth="16" />
-        {data.map((d, idx) => {
-          const percentage = (d.value / total) * 100;
-          const strokeDashoffset = circumference - (circumference * percentage) / 100;
-          const strokeDasharray = circumference;
-          const color = d.name === 'Present' ? 'var(--success-green)' : 'var(--alert-red)';
-          
-          const rotation = (accumulatedPercentage / 100) * 360 - 90;
-          accumulatedPercentage += percentage;
-
-          return (
-            <circle
-              key={idx}
-              cx={center}
-              cy={center}
-              r={r}
-              fill="transparent"
-              stroke={color}
-              strokeWidth="16"
-              strokeDasharray={strokeDasharray}
-              strokeDashoffset={strokeDashoffset}
-              transform={`rotate(${rotation} ${center} ${center})`}
-              style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-            />
-          );
-        })}
-        
-        <text x={center} y={center + 5} textAnchor="middle" fontSize="12" fontWeight="bold" fill="var(--dark-graphite)">
-          {Math.round((data[0].value / total) * 100)}% Present
-        </text>
-      </svg>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {data.map((d, idx) => {
-          const color = d.name === 'Present' ? 'var(--success-green)' : 'var(--alert-red)';
-          return (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
-              <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: color }}></span>
-              <span style={{ fontWeight: '500' }}>{d.name}: {d.value} workers</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
 const Dashboard = () => {
   const [data, setData] = useState(null);
+  const [usersList, setUsersList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('projects');
 
+  const fetchDashboardData = async () => {
+    try {
+      const res = await getDashboardStats();
+      if (res.success) {
+        setData(res);
+      } else {
+        setError(res.message || 'Error loading dashboard metrics');
+      }
+
+      const usersRes = await getUsers();
+      if (usersRes.success) {
+        setUsersList(usersRes.users);
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Server connection error. Failed to load dashboard stats.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchDashboard = async () => {
+    fetchDashboardData();
+  }, []);
+
+  const handleUserStatusToggle = async (userId, currentStatus) => {
+    const nextStatus = currentStatus === 'active' ? 'banned' : 'active';
+    const confirmMsg = nextStatus === 'banned' 
+      ? "Are you sure you want to deactivate/ban this user? Banned users will not be able to log in to ConstructOps."
+      : "Are you sure you want to reactivate this user's account?";
+
+    if (window.confirm(confirmMsg)) {
       try {
-        const res = await getDashboardStats();
+        setLoading(true);
+        const res = await updateUserStatus(userId, nextStatus);
         if (res.success) {
-          setData(res);
-        } else {
-          setError(res.message || 'Error loading dashboard metrics');
+          await fetchDashboardData();
         }
       } catch (err) {
         console.error(err);
-        setError('Server connection error. Failed to load dashboard stats.');
-      } finally {
+        alert(err.response?.data?.message || 'Failed to update user status');
         setLoading(false);
       }
-    };
-    fetchDashboard();
-  }, []);
+    }
+  };
 
   if (loading) return <div style={styles.loading}>Loading System Admin Dashboard...</div>;
   if (error || !data) return <div style={styles.errorBox}>{error || 'Failed to initialize'}</div>;
@@ -229,6 +198,7 @@ const Dashboard = () => {
       case 'active': return 'var(--success-green)';
       case 'completed': return 'var(--steel-blue)';
       case 'paused': return 'var(--primary-orange)';
+      case 'banned': return 'var(--alert-red)';
       default: return 'var(--text-muted)';
     }
   };
@@ -238,7 +208,7 @@ const Dashboard = () => {
       {/* Top Header */}
       <div>
         <h1 style={styles.title}>System Admin Dashboard</h1>
-        <p style={styles.subtitle}>Overview of all construction sites, labor attendance, and material supplies.</p>
+        <p style={styles.subtitle}>Overview of all construction sites, labor attendance, and supplies.</p>
       </div>
 
       {/* Stats Cards */}
@@ -353,6 +323,13 @@ const Dashboard = () => {
             >
               <Users size={16} />
               <span>Labor Directory</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('users')} 
+              style={{ ...styles.tabBtn, ...(activeTab === 'users' ? styles.activeTabBtn : {}) }}
+            >
+              <User size={16} />
+              <span>Users Management</span>
             </button>
           </div>
         </div>
@@ -587,6 +564,86 @@ const Dashboard = () => {
                       Rs {worker.dailyWage.toLocaleString()} / day
                     </td>
                     <td style={styles.td}>{worker.phone}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Tab 5: User Management */}
+        {activeTab === 'users' && (
+          <div style={styles.tableWrapper}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>User Details</th>
+                  <th style={styles.th}>Registered Company</th>
+                  <th style={styles.th}>Account Role</th>
+                  <th style={styles.th}>Status</th>
+                  <th style={styles.th}>Control Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usersList && usersList.map((userItem) => (
+                  <tr key={userItem._id} style={styles.tr}>
+                    <td style={styles.td}>
+                      <div style={{ fontWeight: '600' }}>{userItem.name}</div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{userItem.email}</span>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ fontWeight: '500' }}>{userItem.companyId?.name || 'ConstructOps Partner'}</div>
+                    </td>
+                    <td style={styles.td}>
+                      <span style={{ 
+                        ...styles.categoryTag, 
+                        backgroundColor: getRoleBadgeColor(userItem.role) + '15',
+                        color: getRoleBadgeColor(userItem.role),
+                        fontWeight: '700' 
+                      }}>
+                        {userItem.role}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
+                      <span style={{ 
+                        ...styles.statusBadge, 
+                        backgroundColor: getStatusBadgeColor(userItem.status || 'active') + '15', 
+                        color: getStatusBadgeColor(userItem.status || 'active') 
+                      }}>
+                        {userItem.status || 'active'}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
+                      <button
+                        onClick={() => handleUserStatusToggle(userItem._id, userItem.status || 'active')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          border: 'none',
+                          borderRadius: '4px',
+                          padding: '0.4rem 0.75rem',
+                          fontSize: '0.8rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          color: '#ffffff',
+                          backgroundColor: (userItem.status === 'banned') ? 'var(--success-green)' : 'var(--alert-red)',
+                          transition: 'background-color 0.2s',
+                        }}
+                      >
+                        {userItem.status === 'banned' ? (
+                          <>
+                            <Unlock size={14} />
+                            <span>Unban / Activate</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock size={14} />
+                            <span>Ban / Deactivate</span>
+                          </>
+                        )}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
