@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { login } from '../services/api';
+import { login, loginAdmin } from '../services/api';
 import { Lock, Mail, AlertCircle } from 'lucide-react';
 
 const Login = () => {
@@ -16,11 +16,21 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const data = await login(email, password);
+      let data;
+      if (email === 'constops@admin.com') {
+        data = await loginAdmin(email, password);
+      } else {
+        data = await login(email, password);
+      }
+
       if (data.success) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        navigate('/projects');
+        if (data.user.role === 'admin') {
+          navigate('/dashboard');
+        } else {
+          navigate('/projects');
+        }
       } else {
         setError(data.message || 'Login failed');
       }
