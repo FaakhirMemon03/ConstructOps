@@ -130,6 +130,18 @@ const Projects = () => {
                   <DollarSign size={16} style={styles.icon} />
                   <span>Budget: Rs {proj.budget.toLocaleString()}</span>
                 </div>
+
+                <div style={styles.infoRow}>
+                  <DollarSign size={16} style={{ color: 'var(--primary-orange)' }} />
+                  <span>Spent: Rs {proj.spent.toLocaleString()}</span>
+                </div>
+
+                <div style={styles.infoRow}>
+                  <DollarSign size={16} style={{ color: (proj.budget - proj.spent) >= 0 ? 'var(--success-green)' : 'var(--alert-red)' }} />
+                  <span style={{ color: (proj.budget - proj.spent) >= 0 ? 'var(--success-green)' : 'var(--alert-red)', fontWeight: '600' }}>
+                    Bacha: Rs {(proj.budget - proj.spent).toLocaleString()}
+                  </span>
+                </div>
                 
                 <div style={styles.infoRow}>
                   <Calendar size={16} style={styles.icon} />

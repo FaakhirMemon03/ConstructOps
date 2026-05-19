@@ -321,6 +321,15 @@ const ProjectDetail = () => {
             </span>
           </div>
           <div style={styles.headerStatBox}>
+            <span style={styles.headerStatLabel}>Bacha Hua Budget</span>
+            <span style={{
+              ...styles.headerStatValue,
+              color: (dashboardData.budget - dashboardData.spent) >= 0 ? 'var(--success-green)' : 'var(--alert-red)'
+            }}>
+              Rs {(dashboardData.budget - dashboardData.spent).toLocaleString()}
+            </span>
+          </div>
+          <div style={styles.headerStatBox}>
             <span style={styles.headerStatLabel}>Completion %</span>
             <span style={styles.headerStatValue}>{dashboardData.progress}%</span>
           </div>
