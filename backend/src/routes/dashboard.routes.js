@@ -107,6 +107,12 @@ router.get('/', protect, async (req, res) => {
       .populate('addedBy', 'name role email')
       .populate('projectId', 'name location');
 
+    // 4. Detailed Workers list with role (designated task) and project information
+    const detailedWorkers = await Worker.find(workerFilter)
+      .sort({ createdAt: -1 })
+      .limit(30)
+      .populate('projectId', 'name location');
+
     res.json({
       success: true,
       stats: {
@@ -120,7 +126,8 @@ router.get('/', protect, async (req, res) => {
       workerData,
       detailedProjects,
       detailedExpenses,
-      detailedReports
+      detailedReports,
+      detailedWorkers
     });
   } catch (error) {
     console.error('Dashboard stats error:', error);
