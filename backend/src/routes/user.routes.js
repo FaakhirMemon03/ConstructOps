@@ -42,4 +42,21 @@ router.put('/:id/status', protect, verifyAdmin, async (req, res) => {
   }
 });
 
+// DELETE deactivate/delete user account (Admin only)
+router.delete('/:id', protect, verifyAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    await user.deleteOne();
+
+    res.json({ success: true, message: 'User deactivated and account deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error: ' + error.message });
+  }
+});
+
 export default router;
