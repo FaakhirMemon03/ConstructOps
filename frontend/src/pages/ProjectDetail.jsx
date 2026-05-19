@@ -256,6 +256,22 @@ const ProjectDetail = () => {
     }
   };
 
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setRImages(prev => [...prev, reader.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemoveImage = (indexToRemove) => {
+    setRImages(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
   const handleAddReportSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -1113,23 +1129,67 @@ const ProjectDetail = () => {
               </div>
 
               <div className="form-group">
-                <label>Site Capture (Photo URL Mockup)</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <label>Site Capture (Upload from Gallery)</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Paste dummy photo URL"
-                    value={rImages.join(', ')}
-                    onChange={(e) => setRImages(e.target.value ? e.target.value.split(',').map(s => s.trim()) : [])}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                    id="site-photo-file"
                   />
-                  <button 
-                    type="button" 
-                    onClick={() => setRImages(['https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=600&q=80'])}
-                    className="btn btn-outline"
-                    style={{ padding: '0.5rem 0.75rem' }}
-                  >
-                    Mock URL
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <label 
+                      htmlFor="site-photo-file" 
+                      className="btn btn-outline" 
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', margin: 0 }}
+                    >
+                      <Camera size={18} />
+                      <span>Choose Photo(s)</span>
+                    </label>
+                    <button 
+                      type="button" 
+                      onClick={() => setRImages(['https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=600&q=80'])}
+                      className="btn btn-outline"
+                      style={{ padding: '0.5rem 0.75rem' }}
+                    >
+                      Mock URL
+                    </button>
+                  </div>
+
+                  {/* Preview Selected Photos */}
+                  {rImages.length > 0 && (
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                      {rImages.map((img, idx) => (
+                        <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                          <img src={img} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <button 
+                            type="button" 
+                            onClick={() => handleRemoveImage(idx)} 
+                            style={{
+                              position: 'absolute',
+                              top: '2px',
+                              right: '2px',
+                              background: 'rgba(235, 87, 87, 0.8)',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: '18px',
+                              height: '18px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '10px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
